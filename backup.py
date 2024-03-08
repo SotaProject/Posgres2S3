@@ -20,7 +20,7 @@ expires = os.getenv('expires', '+168h')  # Default 7 days
 file_name = f"{os.getenv('prefix', 'psql')}_{date}.sql"
 
 os.environ['PGPASSWORD'] = password
-command = f"/opt/homebrew/opt/libpq/bin/pg_dump -Z 9 -v -h {hostname} -U {username} -d {database} > {file_name}"
+command = f"pg_dump -Z 9 -v -h {hostname} -U {username} -d {database} > {file_name}"
 subprocess.run(command, shell=True, check=True)
 
 logging.info("Connecting to S3")
