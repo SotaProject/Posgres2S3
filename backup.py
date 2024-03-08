@@ -1,0 +1,48 @@
+import boto3
+import logging
+import datetime
+import subprocess
+import os
+
+date = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+
+logging.info("Starting backup")
+
+username = os.getenv('user')
+password = os.getenv('password')
+hostname = os.getenv('host')
+database = os.getenv('db')
+expires = os.getenv('expires', '+168h')  # Default 7 days
+
+file_name = f"{os.getenv('prefix', 'psql')}_{date}.sql"
+
+os.environ['PGPASSWORD'] = password
+command = f"/opt/homebrew/opt/libpq/bin/pg_dump -Z 9 -v -h {hostname} -U {username} -d {database} > {file_name}"
+subprocess.run(command, shell=True, check=True)
+
+logging.info("Connecting to S3")
+bucket = os.getenv('bucket')
+aws_access_key_id = os.getenv('access_key_id')
+aws_secret_access_key = os.getenv('access_key')
+endpoint_url = os.getenv('endpoint')
+
+s3_client = boto3.client(
+    "s3",
+    endpoint_url=endpoint_url,
+    aws_access_key_id=aws_access_key_id,
+    aws_secret_access_key=aws_secret_access_key,
+)
+
+logging.info("Uploading to S3")
+s3_client.upload_file(Filename=file_name, Bucket=bucket, Key=file_name, ExtraArgs={
+    'Metadata': {
+        'Object-Expires': expires
+    }
+})
+
+logging.info("Removing local")
+os.remove(file_name)
+logging.info("Finished")
