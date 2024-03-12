@@ -2,4 +2,4 @@
 Backup Postgresql database to S3 daily via crontab 
 
 ## Restore
-`gunzip < prefix_00000-00-00-00-00-00.sql.gz | psql DB`
+`gunzip < prefix_0000-00-00-00-00-00.sql.gz | PGPASSWORD=PASSWORD psql -h HOST -U USER DATABASE`
